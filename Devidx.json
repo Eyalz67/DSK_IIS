@@ -1,0 +1,31 @@
+{
+  "tag": "Dev Zone",
+  "title": "Development Hub",
+  "subtitle": "Entry point to the development applications, APIs and tools. Pick an application from the list.",
+  "chips": ["Python 3.13", "FastAPI", "SQL Server", "IIS", "NiFi"],
+  "linksTitle": "Applications",
+
+  "groups": [
+    {
+      "name": "APIs",
+      "links": [
+        { "title": "Hello API", "description": "Python backend smoke test", "link": "/api/hello", "label": "API" },
+        { "title": "Health Check", "description": "API + SQL connection status", "link": "#", "label": "DB" }
+      ]
+    },
+    {
+      "name": "Applications",
+      "links": [
+        { "title": "Tree Graph (dev)", "description": "Product tree - development build", "link": "#", "image": "tree.png" },
+        { "title": "Data Entry Form", "description": "Form to SQL Server - in progress", "link": "#" }
+      ]
+    },
+    {
+      "name": "Tools",
+      "links": [
+        { "title": "NiFi", "description": "Data flows", "link": "http://nifi-server:8080/nifi", "newTab": true },
+        { "title": "טבלאות בדיקה", "description": "דוגמה לקישור בעברית", "link": "#", "label": "טב" }
+      ]
+    }
+  ]
+}

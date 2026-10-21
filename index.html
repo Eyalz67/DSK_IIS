@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Swiss Knife</title>
+<!-- Browser tab icon (from the shared IMG folder) -->
+<link rel="icon" type="image/svg+xml" href="/IMG/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/IMG/favicon.ico">
+<style>
+  :root {
+    --red: #d52b1e;
+    --red-dark: #a8221a;
+    --ink: #1f2933;
+    --muted: #616e7c;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --line: #e4e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    color: #fff;
+    text-align: center;
+    padding: 40px 16px 56px;
+  }
+  header svg { width: 260px; max-width: 80%; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+  h1 { margin: 12px 0 6px; font-size: 2.4rem; letter-spacing: .5px; }
+  .tagline { margin: 0; opacity: .9; font-size: 1.1rem; }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 960px;
+    margin: -32px auto 0;
+    padding: 0 16px 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    position: relative;
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 20px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    border-color: var(--red);
+  }
+  .icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #fdecea;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .icon svg { width: 24px; height: 24px; stroke: var(--red); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon img { width: 30px; height: 30px; object-fit: contain; }
+  .card h2 { margin: 0 0 6px; font-size: 1.1rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+  .badge {
+    position: absolute; top: 14px; right: 14px;
+    font-size: .7rem; font-weight: 600;
+    padding: 3px 8px; border-radius: 999px;
+    background: #eef1f4; color: var(--muted);
+  }
+  .badge.live { background: #e3f6ea; color: #1f7a3d; }
+
+  /* ---- "links" tile: opens a dropdown list ---- */
+  .card.has-links { cursor: pointer; user-select: none; }
+  .card.open { z-index: 30; border-color: var(--red); }
+  .chev {
+    position: absolute; bottom: 14px; right: 16px;
+    width: 18px; height: 18px;
+    stroke: var(--muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    transition: transform .2s;
+  }
+  .card.open .chev { transform: rotate(180deg); stroke: var(--red); }
+  .dropdown {
+    display: none;
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.15);
+    max-height: 340px; overflow-y: auto;
+    padding: 6px 0;
+    cursor: default;
+  }
+  .card.open .dropdown { display: block; }
+  .dropdown a {
+    display: block;
+    padding: 9px 16px;
+    color: var(--ink);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+  }
+  .dropdown a + a { border-top: 1px solid #f0f2f4; }
+  .dropdown a:hover { background: #fdecea; border-left-color: var(--red); }
+  .dropdown .lt { display: block; font-weight: 600; font-size: .93rem; }
+  .dropdown .ld { display: block; color: var(--muted); font-size: .8rem; margin-top: 2px; }
+  .dropdown .empty { padding: 9px 16px; color: var(--muted); font-size: .9rem; }
+
+  .message {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .message.error { color: #c0392b; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: .85rem;
+    padding: 18px 16px 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Swiss army knife illustration (inline SVG, no external files) -->
+  <svg viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg" aria-label="Swiss army knife">
+    <defs>
+      <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f4f6f8"/>
+        <stop offset="1" stop-color="#9aa5b1"/>
+      </linearGradient>
+      <linearGradient id="handle" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ef4b3f"/>
+        <stop offset="1" stop-color="#b3241a"/>
+      </linearGradient>
+    </defs>
+    <g fill="url(#steel)" stroke="#7b8794" stroke-width="1">
+      <g transform="rotate(-38 196 103)">
+        <path d="M196 96 H262 Q274 96 266 106 L258 110 H196 Z"/>
+      </g>
+      <g transform="rotate(-78 196 103)" fill="none" stroke="#9aa5b1" stroke-width="4" stroke-linecap="round">
+        <path d="M196 103 H210 l5 -7 l6 14 l6 -14 l6 14 l6 -14 l5 7"/>
+      </g>
+      <g transform="rotate(-142 64 103)">
+        <path d="M64 98 H112 L120 103 L112 108 H64 Z"/>
+      </g>
+      <g transform="rotate(-108 64 103)">
+        <rect x="64" y="99" width="46" height="8" rx="2"/>
+        <rect x="106" y="97" width="8" height="12" rx="2"/>
+      </g>
+    </g>
+    <rect x="40" y="80" width="180" height="46" rx="23" fill="url(#handle)" stroke="#8f1d15" stroke-width="1.5"/>
+    <circle cx="64" cy="103" r="4" fill="#d9dee3" stroke="#8f1d15"/>
+    <circle cx="196" cy="103" r="4" fill="#d9dee3" stroke="#8f1d15"/>
+    <rect x="114" y="87" width="32" height="32" rx="5" fill="#ffffff"/>
+    <rect x="126" y="92" width="8" height="22" fill="url(#handle)"/>
+    <rect x="119" y="99" width="22" height="8" fill="url(#handle)"/>
+  </svg>
+
+  <h1>Data Swiss Knife</h1>
+  <p class="tagline">One place for all your everyday data tools</p>
+</header>
+
+<main>
+  <!-- Tiles are built from tiles.json (same folder). Edit that file, not this one. -->
+  <div class="grid" id="tiles">
+    <div class="message">Loading&hellip;</div>
+  </div>
+</main>
+
+<footer>
+  Data Swiss Knife &middot; Internal tools portal
+</footer>
+
+<script>
+  // Small built-in icon set. In tiles.json use "icon": one of these names.
+  // Unknown or missing icon -> "link".
+  var ICONS = {
+    form:   '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+    chart:  '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    upload: '<path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
+    tree:   '<rect x="9" y="3" width="6" height="4" rx="1"/><rect x="3" y="17" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/><path d="M12 7v5M6 17v-3h12v3"/>',
+    table:  '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+    link:   '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>'
+  };
+
+  function buildTile(t) {
+    // A "links" tile with exactly one link behaves like a normal tile:
+    // one click goes straight there, no dropdown.
+    if (Array.isArray(t.links) && t.links.length === 1) {
+      t.link = t.links[0].link;
+      t.newTab = t.links[0].newTab;
+      t.links = null;
+    }
+    var isLinks = Array.isArray(t.links);
+
+    // Normal tile = <a> link. "links" tile = <div> that opens a dropdown.
+    var a = document.createElement(isLinks ? 'div' : 'a');
+    a.className = 'card' + (isLinks ? ' has-links' : '');
+    if (!isLinks) {
+      a.href = t.link || '#';
+      if (t.newTab) { a.target = '_blank'; a.rel = 'noopener'; }
+    }
+
+    if (t.badge) {
+      var b = document.createElement('span');
+      b.className = 'badge' + (String(t.badge).toLowerCase() === 'live' ? ' live' : '');
+      b.textContent = t.badge;
+      a.appendChild(b);
+    }
+
+    var icon = document.createElement('div');
+    icon.className = 'icon';
+    var builtIn = '<svg viewBox="0 0 24 24">' + (ICONS[t.icon] || ICONS.link) + '</svg>';
+
+    if (t.image) {
+      // "tree.png"           -> IMG/tree.png
+      // "/other/path/x.png"  -> used as-is (any value containing a "/")
+      var img = document.createElement('img');
+      img.alt = '';
+      img.src = (String(t.image).indexOf('/') === -1) ? 'IMG/' + t.image : t.image;
+      // Image missing or misspelled -> fall back to the built-in icon
+      img.onerror = function () { icon.innerHTML = builtIn; };
+      icon.appendChild(img);
+    } else {
+      icon.innerHTML = builtIn;
+    }
+    a.appendChild(icon);
+
+    var h = document.createElement('h2');
+    h.dir = 'auto';                       // Hebrew titles align right automatically
+    h.textContent = t.title || '';
+    a.appendChild(h);
+
+    var p = document.createElement('p');
+    p.dir = 'auto';
+    p.textContent = t.description || '';
+    a.appendChild(p);
+
+    if (isLinks) addDropdown(a, t.links);
+
+    return a;
+  }
+
+  // Builds the dropdown list (top to bottom, in the order of the json)
+  function addDropdown(card, links) {
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+
+    var chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chev.setAttribute('viewBox', '0 0 24 24');
+    chev.setAttribute('class', 'chev');
+    chev.innerHTML = '<path d="M6 9l6 6 6-6"/>';
+    card.appendChild(chev);
+
+    var dd = document.createElement('div');
+    dd.className = 'dropdown';
+
+    if (links.length === 0) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'No links configured.';
+      dd.appendChild(e);
+    }
+
+    links.forEach(function (l) {
+      var item = document.createElement('a');
+      item.href = l.link || '#';
+      item.dir = 'auto';
+      if (l.newTab) { item.target = '_blank'; item.rel = 'noopener'; }
+
+      var lt = document.createElement('span');
+      lt.className = 'lt';
+      lt.textContent = l.title || l.link || '';
+      item.appendChild(lt);
+
+      if (l.description) {
+        var ld = document.createElement('span');
+        ld.className = 'ld';
+        ld.textContent = l.description;
+        item.appendChild(ld);
+      }
+      dd.appendChild(item);
+    });
+
+    // Clicks inside the list follow the link and don't toggle the card
+    dd.addEventListener('click', function (ev) { ev.stopPropagation(); });
+    card.appendChild(dd);
+
+    function toggle(ev) {
+      ev.stopPropagation();
+      var wasOpen = card.classList.contains('open');
+      closeAllDropdowns();
+      if (!wasOpen) card.classList.add('open');
+    }
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(ev); }
+    });
+  }
+
+  function closeAllDropdowns() {
+    var open = document.querySelectorAll('.card.open');
+    for (var i = 0; i < open.length; i++) open[i].classList.remove('open');
+  }
+  // Click anywhere else or press Esc -> close
+  document.addEventListener('click', closeAllDropdowns);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAllDropdowns(); });
+
+  function showMessage(text, isError) {
+    var grid = document.getElementById('tiles');
+    grid.innerHTML = '';
+    var m = document.createElement('div');
+    m.className = 'message' + (isError ? ' error' : '');
+    m.textContent = text;
+    grid.appendChild(m);
+  }
+
+  // no-store: always read the latest tiles.json, so edits show up on refresh
+  fetch('tiles.json', { cache: 'no-store' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (tiles) {
+      var grid = document.getElementById('tiles');
+      grid.innerHTML = '';
+      if (!Array.isArray(tiles) || tiles.length === 0) {
+        showMessage('No tiles configured yet.', false);
+        return;
+      }
+      tiles.forEach(function (t) { grid.appendChild(buildTile(t)); });
+    })
+    .catch(function (e) {
+      showMessage('Could not load tiles.json (' + e.message + '). Check the file exists and is valid JSON.', true);
+    });
+</script>
+
+</body>
+</html>

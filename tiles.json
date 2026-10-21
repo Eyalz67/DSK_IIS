@@ -1,0 +1,33 @@
+[
+  {
+    "title": "Tree Graph",
+    "description": "Interactive product tree view.",
+    "link": "/Screens/Treegraph.html",
+    "image": "tree.png",
+    "badge": "Live"
+  },
+  {
+    "title": "Important Links",
+    "description": "Frequently used systems and pages.",
+    "image": "links.png",
+    "links": [
+      { "title": "Tableau Server",   "link": "http://tableau-server/",  "newTab": true },
+      { "title": "NiFi",             "link": "http://nifi-server:8080/nifi", "description": "Data flows", "newTab": true },
+      { "title": "API Test",         "link": "/api/hello" },
+      { "title": "נוהל עבודה",        "link": "/docs/procedure.pdf", "description": "קישור בעברית לדוגמה" }
+    ]
+  },
+  {
+    "title": "API Test",
+    "description": "Hello from the Python backend.",
+    "link": "/api/hello",
+    "image": "api.svg"
+  },
+  {
+    "title": "Data Entry Form",
+    "description": "Fill in a form and send the results straight to the database.",
+    "link": "form.html",
+    "icon": "form",
+    "badge": "Coming soon"
+  }
+]

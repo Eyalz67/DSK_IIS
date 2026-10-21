@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development &middot; Data Swiss Knife</title>
+<!-- Browser tab icon (from the shared IMG folder) -->
+<link rel="icon" type="image/svg+xml" href="/IMG/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/IMG/favicon.ico">
+<style>
+  :root {
+    --red: #d52b1e;
+    --navy: #1b2533;
+    --navy-2: #243245;
+    --ink: #1f2933;
+    --muted: #616e7c;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --line: #e4e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    background: var(--navy);
+    color: #cbd2d9;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 24px;
+    font-size: .9rem;
+  }
+  .topbar svg { width: 34px; height: auto; }
+  .topbar a { color: #fff; text-decoration: none; font-weight: 600; }
+  .topbar a:hover { text-decoration: underline; }
+  .topbar .sep { opacity: .5; }
+
+  /* ---------- layout: hero | links on the right ---------- */
+  .layout {
+    flex: 1;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ---------- left: hero ---------- */
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 40px 36px;
+    position: relative;
+    overflow: hidden;
+    position: sticky; top: 20px;
+  }
+  .hero::before {                        /* subtle grid pattern */
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+    pointer-events: none;
+  }
+  .hero::after {                         /* soft red glow in the corner */
+    content: "";
+    position: absolute; right: -80px; bottom: -80px;
+    width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(213,43,30,.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero > * { position: relative; z-index: 1; }
+  .tag {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    font-size: .72rem; font-weight: 700; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .hero h1 { margin: 14px 0 10px; font-size: 2.3rem; }
+  .hero p { margin: 0; color: #cbd2d9; max-width: 520px; line-height: 1.55; font-size: 1.02rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .chip {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #e4e7eb;
+    font-size: .8rem;
+    padding: 5px 11px; border-radius: 999px;
+  }
+
+  /* ---------- right: links as round rectangles ---------- */
+  .links-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 0 4px 10px;
+  }
+  .links-head h2 { margin: 0; font-size: 1.05rem; }
+  .count {
+    background: #fdecea; color: var(--red);
+    font-size: .75rem; font-weight: 700;
+    padding: 2px 9px; border-radius: 999px;
+  }
+  .group {
+    margin: 18px 4px 8px;
+    font-size: .7rem; font-weight: 700; letter-spacing: 1px;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .group:first-of-type { margin-top: 4px; }
+  .link {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    text-decoration: none; color: var(--ink);
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+  }
+  .link:hover {
+    transform: translateX(-3px);
+    border-color: var(--red);
+    box-shadow: 0 6px 14px rgba(0,0,0,.09);
+  }
+  .badge {
+    flex: none;
+    width: 38px; height: 38px; border-radius: 10px;
+    background: #fdecea;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .82rem; color: var(--red);
+    overflow: hidden;
+  }
+  .badge img { width: 26px; height: 26px; object-fit: contain; }
+  .txt { flex: 1; min-width: 0; }
+  .txt b { display: block; font-size: .95rem; }
+  .txt span { display: block; color: var(--muted); font-size: .8rem; margin-top: 2px; }
+  .arrow { color: #b0b8c1; font-size: 1.3rem; line-height: 1; }
+  .link:hover .arrow { color: var(--red); }
+
+  .message {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--muted);
+  }
+  .message.error { color: #c0392b; }
+
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 16px 24px; }
+
+  /* ---------- narrow screens: links drop below ---------- */
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; padding: 20px 16px 32px; }
+    .hero { position: static; padding: 28px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <svg viewBox="0 0 260 160" aria-hidden="true">
+    <rect x="40" y="80" width="180" height="46" rx="23" fill="#d52b1e"/>
+    <rect x="114" y="87" width="32" height="32" rx="5" fill="#fff"/>
+    <rect x="126" y="92" width="8" height="22" fill="#d52b1e"/>
+    <rect x="119" y="99" width="22" height="8" fill="#d52b1e"/>
+    <g transform="rotate(-38 196 103)"><path d="M196 96 H262 Q274 96 266 106 L258 110 H196 Z" fill="#cbd2d9"/></g>
+  </svg>
+  <a href="/">Data Swiss Knife</a>
+  <span class="sep">/</span>
+  <span id="crumb">Development</span>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: hero (texts come from Devidx.json) -->
+  <section class="hero">
+    <span class="tag" id="tag">Dev Zone</span>
+    <h1 id="title" dir="auto">Development Hub</h1>
+    <p id="subtitle" dir="auto"></p>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <!-- RIGHT: links (built from Devidx.json) -->
+  <aside>
+    <div class="links-head">
+      <h2 id="linksTitle">Applications</h2>
+      <span class="count" id="count">0</span>
+    </div>
+    <div id="links"><div class="message">Loading&hellip;</div></div>
+  </aside>
+
+</div>
+
+<footer>Data Swiss Knife &middot; Development</footer>
+
+<script>
+  // Short label for the badge when no image is given: "Tree Graph" -> "TG"
+  function initials(s) {
+    var w = String(s || '').trim().split(/\s+/);
+    return ((w[0] || '').charAt(0) + (w[1] || w[0] || '').charAt(w[1] ? 0 : 1)).toUpperCase();
+  }
+
+  function buildLink(l) {
+    var a = document.createElement('a');
+    a.className = 'link';
+    a.href = l.link || '#';
+    if (l.newTab) { a.target = '_blank'; a.rel = 'noopener'; }
+
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    var label = l.label || initials(l.title);
+    if (l.image) {
+      // "x.png" -> /IMG/x.png (the shared images folder); a value with "/" is used as-is
+      var img = document.createElement('img');
+      img.alt = '';
+      img.src = (String(l.image).indexOf('/') === -1) ? '/IMG/' + l.image : l.image;
+      img.onerror = function () { badge.textContent = label; };
+      badge.appendChild(img);
+    } else {
+      badge.textContent = label;
+    }
+    a.appendChild(badge);
+
+    var txt = document.createElement('span');
+    txt.className = 'txt';
+    txt.dir = 'auto';
+    var b = document.createElement('b');
+    b.textContent = l.title || l.link || '';
+    txt.appendChild(b);
+    if (l.description) {
+      var d = document.createElement('span');
+      d.textContent = l.description;
+      txt.appendChild(d);
+    }
+    a.appendChild(txt);
+
+    var arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.innerHTML = '&rsaquo;';
+    a.appendChild(arrow);
+    return a;
+  }
+
+  function setText(id, value) {
+    if (value !== undefined && value !== null) document.getElementById(id).textContent = value;
+  }
+
+  function render(cfg) {
+    // Hero texts (all optional)
+    setText('tag', cfg.tag);
+    setText('title', cfg.title);
+    setText('subtitle', cfg.subtitle);
+    setText('linksTitle', cfg.linksTitle);
+    if (cfg.title) document.title = cfg.title + ' · Data Swiss Knife';
+    document.getElementById('tag').style.display = cfg.tag === '' ? 'none' : '';
+
+    var chips = document.getElementById('chips');
+    chips.innerHTML = '';
+    (cfg.chips || []).forEach(function (c) {
+      var s = document.createElement('span');
+      s.className = 'chip';
+      s.textContent = c;
+      chips.appendChild(s);
+    });
+
+    // Links: either "groups": [{name, links:[...]}] or a flat "links": [...]
+    var groups = Array.isArray(cfg.groups) ? cfg.groups
+               : [{ name: '', links: cfg.links || [] }];
+    var box = document.getElementById('links');
+    box.innerHTML = '';
+    var total = 0;
+    groups.forEach(function (g) {
+      var links = g.links || [];
+      if (g.name) {
+        var h = document.createElement('div');
+        h.className = 'group';
+        h.dir = 'auto';
+        h.textContent = g.name;
+        box.appendChild(h);
+      }
+      links.forEach(function (l) { box.appendChild(buildLink(l)); total++; });
+    });
+    document.getElementById('count').textContent = total;
+    if (total === 0) showMessage('No links configured yet.', false);
+  }
+
+  function showMessage(text, isError) {
+    var box = document.getElementById('links');
+    box.innerHTML = '';
+    var m = document.createElement('div');
+    m.className = 'message' + (isError ? ' error' : '');
+    m.textContent = text;
+    box.appendChild(m);
+  }
+
+  // Always read the latest Devidx.json (same folder) - edits show on refresh
+  fetch('Devidx.json', { cache: 'no-store' })
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(render)
+    .catch(function (e) {
+      showMessage('Could not load Devidx.json (' + e.message + '). Check the file exists and is valid JSON.', true);
+    });
+</script>
+
+</body>
+</html>
