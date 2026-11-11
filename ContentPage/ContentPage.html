@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דף תוכן</title>
+<link rel="icon" type="image/svg+xml" href="/IMG/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/IMG/favicon.ico">
+<style>
+  /* colours taken from the reference "Corporate Report" design */
+  :root {
+    --bg: #f1f4f8;          /* page background */
+    --panel: #ffffff;
+    --ink: #26364a;         /* body text */
+    --muted: #718096;       /* secondary text */
+    --navy: #153e70;        /* brand: titles, header, buttons */
+    --navy-hover: #1d4f8c;
+    --navy-line: #315982;   /* header cell borders */
+    --line: #dce6f1;        /* section separators */
+    --cell-line: #dce5ef;   /* table cell borders */
+    --row-alt: #edf4fb;     /* child rows */
+    --row-deep: #e3eef9;    /* deeper child rows */
+    --row-hover: #dceafb;
+    --logo-line: #8ca9c9;
+    --status: #176b49;
+    --error: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 "Segoe UI", Arial, sans-serif;
+  }
+
+  /* ---------- header ---------- */
+  .topbar {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    background: var(--panel);
+    border-top: 7px solid var(--navy);
+    border-bottom: 2px solid var(--line);
+  }
+  .topbar .title-box { text-align: center; }
+  .topbar h1 { margin: 0; font-size: 25px; font-weight: 700; color: var(--navy); }
+  .topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .topbar .logo-box { justify-self: end; }
+  .logo { height: 48px; max-width: 180px; object-fit: contain; }
+  .logo-fallback {
+    height: 48px; width: 120px; border: 2px dashed var(--logo-line);
+    display: flex; align-items: center; justify-content: center;
+    color: #54749a; font-size: 12px;
+  }
+
+  main { padding: 16px 12px 32px; margin: 0 auto; }
+
+  /* ---------- input panel ---------- */
+  .search {
+    display: flex; flex-wrap: wrap; align-items: flex-end; align-content: center; gap: 14px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    min-height: 130px; padding: 20px;
+  }
+  .panel-links {
+    margin-left: auto; align-self: stretch;
+    display: flex; flex-direction: column; justify-content: center; gap: 6px;
+    min-width: 220px; padding-left: 18px; border-left: 2px solid var(--line); font-size: 13px;
+  }
+  .panel-links:empty { border-left-color: transparent; }
+  .panel-links a { color: var(--navy); text-decoration: none; font-weight: 600; }
+  .panel-links a:hover { text-decoration: underline; }
+  .search label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--navy); font-weight: 700; }
+  .search input {
+    width: 240px; padding: 8px 10px; font: inherit; color: var(--ink);
+    border: 1px solid var(--cell-line); border-radius: 5px; background: #fff;
+  }
+  .search input:focus { outline: 2px solid var(--navy); outline-offset: -1px; border-color: var(--navy); }
+
+  /* buttons: navy like the reference print button */
+  .btn {
+    padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer;
+    border-radius: 5px; border: 1px solid var(--navy); background: var(--navy); color: #fff;
+  }
+  .btn:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+  .btn.outline { background: #fff; color: var(--navy); }
+  .btn.outline:hover { background: var(--row-alt); color: var(--navy); border-color: var(--navy); }
+  .btn.primary { min-width: 90px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .msg { width: 100%; font-size: 13px; color: var(--error); white-space: pre-wrap; }
+  .msg:empty { display: none; }
+
+  /* ---------- results ---------- */
+  .results { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  .results[hidden] { display: none; }
+  .toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; border-bottom: 2px solid var(--line);
+  }
+  .toolbar .info { color: var(--muted); font-size: 13px; }
+  .toolbar .info b { color: var(--navy); }
+  .toolbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dbg-badge {
+    display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 4px;
+    background: #b42318; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  }
+  .toolbar .btn { padding: 6px 14px; font-size: 13px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; text-align: left; vertical-align: top; white-space: nowrap; }
+  th {
+    background: var(--navy); color: #fff; font-size: 12px; font-weight: 700;
+    border: 1px solid var(--navy-line);
+    position: sticky; top: 0; z-index: 1;
+  }
+  th.tree-col { background: #1b4a80; }
+  td { border: 1px solid var(--cell-line); }
+  td.wrap { white-space: normal; min-width: 180px; }
+  tr.lvl1 td { background: #fff; }
+  tr.lvl2 td { background: var(--row-alt); }
+  tr.lvl3 td, tr.lvl4 td { background: var(--row-deep); }
+  tbody tr:hover td { background: var(--row-hover); }
+  td.tree { font-weight: 700; color: var(--navy); }
+  td.tree-empty { color: transparent; }
+
+  .tg {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; margin-right: 6px; padding: 0;
+    border: 1px solid var(--navy); border-radius: 4px; background: #fff;
+    color: var(--navy); font: 700 13px/1 "Segoe UI", Arial, sans-serif; cursor: pointer;
+    vertical-align: -3px;
+  }
+  .tg:hover { background: var(--navy); color: #fff; }
+  .tg span { display: inline-block; transition: transform .15s; }
+  .tg span.open { transform: rotate(90deg); }   /* ↪ turns to point down when expanded */
+  .tg-spacer { display: inline-block; width: 24px; }
+  .empty { padding: 24px; text-align: center; color: var(--muted); }
+
+  /* ---------- debug mode (&dbg) ---------- */
+  body.debug main { max-width: none; }
+  body.debug #expandAll, body.debug #collapseAll { display: none; }   /* no tree in debug */
+  body.debug .table-wrap { overflow: auto; max-height: calc(100vh - 290px); min-height: 200px; }
+  body.debug td { white-space: nowrap; }
+  .flt {
+    margin-left: 6px; padding: 0 4px; height: 18px; min-width: 18px;
+    border: 1px solid rgba(255,255,255,.55); border-radius: 3px;
+    background: transparent; color: #fff; font-size: 10px; line-height: 16px; cursor: pointer;
+    vertical-align: 1px;
+  }
+  .flt:hover { background: rgba(255,255,255,.18); }
+  .flt.active { background: #fff; color: var(--navy); border-color: #fff; }
+  .fpop {
+    position: absolute; z-index: 50; width: 260px;
+    background: #fff; border: 1px solid var(--cell-line); border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(21, 62, 112, .18); padding: 10px; font-size: 13px;
+  }
+  .fpop .ftitle { font-weight: 700; color: var(--navy); margin-bottom: 6px; word-break: break-all; }
+  .fpop input[type=search] {
+    width: 100%; padding: 6px 8px; font: inherit; border: 1px solid var(--cell-line); border-radius: 4px; margin-bottom: 6px;
+  }
+  .fpop .flist { max-height: 260px; overflow: auto; border: 1px solid var(--cell-line); border-radius: 4px; padding: 4px 6px; }
+  .fpop label { display: flex; gap: 6px; align-items: center; padding: 2px 0; cursor: pointer; white-space: nowrap; }
+  .fpop label.all { font-weight: 600; border-bottom: 1px solid var(--line); margin-bottom: 2px; padding-bottom: 4px; }
+  .fpop .blank { color: var(--muted); font-style: italic; }
+  .fpop .more { color: var(--muted); font-size: 12px; padding: 4px 0; }
+  .fpop .fbtns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+  .fpop .fbtns .btn { padding: 5px 12px; font-size: 12px; }
+  #clearFilters[hidden] { display: none; }
+  .orient {
+    padding: 6px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--navy); border-radius: 5px; background: #fff; color: var(--navy);
+  }
+  .orient:focus { outline: 2px solid var(--navy); outline-offset: 1px; }
+
+  /* used for a moment before printing to measure the narrowest possible table */
+  table#grid.measure { width: min-content !important; font-size: 11px; }
+  table#grid.measure th, table#grid.measure td { padding: 4px 6px; white-space: normal !important; }
+
+  /* ---------- print ---------- */
+  tr.print-only { display: none; }
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff; font-size: 11px; }
+    .search, .toolbar, .topbar { display: none !important; }
+    tr.print-only { display: table-row; }
+    th.print-title {
+      background: #fff !important; color: var(--ink); text-align: center; font-weight: 400;
+      border: none; border-top: 5px solid var(--navy); border-bottom: 2px solid var(--line);
+      padding: 6px 0 8px;
+    }
+    /* sizes are divided by the fit-to-width zoom so the page header keeps its size */
+    th.print-title .ph { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+    th.print-title .pl { justify-self: end; }
+    th.print-title .pl img { height: calc(36px * var(--inv, 1)); max-width: calc(150px * var(--inv, 1)); object-fit: contain; display: block; }
+    th.print-title .t { font-size: calc(18px * var(--inv, 1)); font-weight: 700; color: var(--navy); }
+    th.print-title .p { font-size: calc(10px * var(--inv, 1)); color: var(--muted); margin-top: 2px; }
+    table#grid { zoom: var(--print-zoom, 1); }
+    main { padding: 0; max-width: none; }
+    .results { border: none; margin: 0; }
+    .table-wrap, body.debug .table-wrap { overflow: visible; max-height: none; }
+    .flt, .fpop { display: none !important; }
+    table { font-size: 11px; }
+    th { position: static; }
+    th, td, body.debug td { padding: 4px 6px; white-space: normal; }
+    tbody tr:hover td { background: inherit; }
+    tr.lvl1 td { background: #fff; }
+    tr.lvl2 td { background: var(--row-alt); }
+    tr.lvl3 td, tr.lvl4 td { background: var(--row-deep); }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    .tg { display: none; }
+    .tg-spacer { display: none; }
+  }
+</style>
+<style id="pageSize">@page { size: A4 landscape; margin: 12mm; }</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div></div>
+  <div class="title-box">
+    <h1 id="pageTitle" dir="auto">דף תוכן</h1>
+    <div class="sub">Data Swiss Knife</div>
+  </div>
+  <div class="logo-box"><img id="logo" class="logo" alt="Logo"></div>
+</header>
+
+<main>
+  <div class="search" id="searchForm">
+    <label>Main Part
+      <input id="mainPart" name="mainpart" required>
+    </label>
+    <label>Main Serial
+      <input id="mainSerial" name="mainserial">
+    </label>
+    <button type="button" class="btn primary" id="runBtn">Run</button>
+    <nav class="panel-links" id="panelLinks"></nav><!-- links will go here, e.g. <a href="...">Link</a> -->
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <section class="results" id="results" hidden>
+    <div class="toolbar">
+      <div class="info" id="info"></div>
+      <div class="actions">
+        <button type="button" class="btn outline" id="clearFilters" hidden>Clear filters</button>
+        <button type="button" class="btn outline" id="expandAll">Expand all</button>
+        <button type="button" class="btn outline" id="collapseAll">Collapse all</button>
+        <select class="orient" id="orient" title="Page orientation for Print / PDF">
+          <option value="landscape">Landscape</option>
+          <option value="portrait">Portrait</option>
+        </select>
+        <button type="button" class="btn" id="printBtn">Print</button>
+        <button type="button" class="btn" id="pdfBtn">Download PDF</button>
+        <button type="button" class="btn" id="xlsBtn">Download Excel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="grid">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =====================================================================
+   API helper – same origin, Windows SSO is sent automatically by the browser
+   Responses are { "data": ..., "error": null | "message" }
+   ===================================================================== */
+async function api(url, options = {}) {
+  let res, body;
+  try {
+    res = await fetch(url, { cache: "no-store", credentials: "same-origin", ...options });
+  } catch (e) {
+    throw new Error("Cannot reach the server: " + e.message);
+  }
+  try { body = await res.json(); }
+  catch { throw new Error(`Server returned HTTP ${res.status} (no JSON). Check C:\\Apps\\dsk-api\\logs.`); }
+  if (!res.ok || body.error) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
+  return body.data;
+}
+
+/* =====================================================================
+   Column building from the config
+   ===================================================================== */
+function buildLayout(cfg) {
+  const fields = cfg.fields || [];
+
+  // group -> levels. A level = all fields of the group with the same groupIndex,
+  // so fields sharing a groupIndex open and close together.
+  const byGroup = new Map();
+  fields.forEach(f => {
+    if (!f.group) return;
+    if (!byGroup.has(f.group)) byGroup.set(f.group, new Map());
+    const gi = Number(f.groupIndex) || 0;
+    const m = byGroup.get(f.group);
+    if (!m.has(gi)) m.set(gi, []);
+    m.get(gi).push(f);
+  });
+  const groupLevels = new Map();                       // group -> [[fields of level 1], [level 2], ...]
+  byGroup.forEach((m, g) => groupLevels.set(g, [...m.keys()].sort((a, b) => a - b).map(k => m.get(k))));
+  const levelOf = f => groupLevels.get(f.group).findIndex(lv => lv.includes(f)) + 1;
+
+  // a group is placed by its level-1 field with the lowest fieldIndex
+  const idx = f => f.fieldIndex ?? Infinity;
+  const anchorOf = g => groupLevels.get(g)[0].slice().sort((a, b) => idx(a) - idx(b))[0];
+
+  const anchors = fields
+    .map((f, i) => ({ f, i }))
+    .filter(x => !x.f.group || anchorOf(x.f.group) === x.f)
+    .sort((a, b) => idx(a.f) - idx(b.f) || a.i - b.i)
+    .map(x => x.f);
+
+  const ordered = [];
+  anchors.forEach(f => {
+    if (f.group) groupLevels.get(f.group).forEach(lv => lv.forEach(l => ordered.push(l)));
+    else ordered.push(f);
+  });
+
+  // merge normal columns sharing the same header (alias, or field name when no alias)
+  const columns = [];
+  const byHeader = new Map();
+  const seenLevel = new Set();
+  ordered.forEach(f => {
+    const header = (f.alias && f.alias.trim()) || f.field;
+    if (!f.group && byHeader.has(header)) {
+      byHeader.get(header).fields.push(f.field);
+      return;
+    }
+    const level = f.group ? levelOf(f) : 0;
+    const lk = f.group + "|" + level;
+    const col = { header, fields: [f.field], group: f.group || null, level, first: f.group ? !seenLevel.has(lk) : false };
+    if (f.group) seenLevel.add(lk);
+    columns.push(col);
+    if (!f.group) byHeader.set(header, col);
+  });
+
+  // groups in the order their columns appear; levels as lists of field names
+  const groups = columns.filter(c => c.level === 1 && c.first)
+    .map(c => ({ name: c.group, levels: groupLevels.get(c.group).map(lv => lv.map(f => f.field)) }));
+
+  // a top-level row = distinct (columns left of the first group + level-1 fields of every group)
+  const firstLevelCol = columns.findIndex(c => c.level === 1);
+  const keyFields = firstLevelCol < 0 ? [] : [
+    ...columns.slice(0, firstLevelCol).flatMap(c => c.fields),
+    ...groups.flatMap(g => g.levels[0])
+  ];
+
+  return { columns, groups, keyFields };
+}
+
+/* =====================================================================
+   Tree building
+   Top level: one row per distinct key (see keyFields above).
+   Each group has its own children under a top row: the rows are grouped
+   by level 2, then level 3 ... of that group (all fields of the level together).
+   Ids are built from the values, so expanded rows stay expanded when filters change.
+   ===================================================================== */
+const blank = v => v === null || v === undefined || String(v).trim() === "";
+
+function buildGroupChildren(rows, group, depth, parentId) {
+  if (depth >= group.levels.length) return [];
+  const lvFields = group.levels[depth];
+  const deeper = group.levels.slice(depth).flat();
+  const map = new Map();
+  rows.forEach(r => {
+    if (deeper.every(f => blank(r[f]))) return;          // nothing to show at this level or below
+    const key = JSON.stringify(lvFields.map(f => r[f] ?? ""));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  });
+  const nodes = [];
+  map.forEach((groupRows, key) => {
+    const id = parentId + "/" + key;
+    nodes.push({
+      id, depth, group: group.name, rows: groupRows,
+      kids: { [group.name]: buildGroupChildren(groupRows, group, depth + 1, id) }
+    });
+  });
+  return nodes;
+}
+
+function buildTree(rows, layout) {
+  const { groups, keyFields } = layout;
+  if (!groups.length) return rows.map((r, i) => ({ id: "r" + i, depth: 0, group: null, rows: [r], kids: {} }));
+  const map = new Map();
+  rows.forEach(r => {
+    const key = JSON.stringify(keyFields.map(f => r[f] ?? ""));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  });
+  const nodes = [];
+  map.forEach((groupRows, key) => {
+    const id = "t" + key;
+    const kids = {};
+    groups.forEach(g => { kids[g.name] = buildGroupChildren(groupRows, g, 1, id + ":" + g.name); });
+    nodes.push({ id, depth: 0, group: null, rows: groupRows, kids });
+  });
+  return nodes;
+}
+
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+const state = { cfg: null, layout: null, tree: [], expanded: new Set(), rowCount: 0, params: {} };
+
+const isEmpty = v => v === null || v === undefined || String(v).trim() === "";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function cellValue(col, row, delim) {
+  const vals = col.fields.map(f => row[f]).filter(v => !isEmpty(v));
+  return vals.join(delim);
+}
+
+function renderHead(visible = new Set()) {
+  const thead = document.querySelector("#grid thead");
+  const cols = state.layout.columns;
+  const p = state.params;
+  const params = `Main Part: ${p.mainpart}` + (p.mainserial ? ` · Main Serial: ${p.mainserial}` : "") +
+                 ` · ${new Date().toLocaleString("en-GB")}`;
+  const logo = state.logoOk ? `<img src="${esc(state.cfg.logo)}" alt="">` : "";
+
+  // printed on every page (thead repeats when printing): title, parameters, logo
+  const printRow = `<tr class="print-only"><th class="print-title" colspan="${cols.length}">
+      <div class="ph"><div></div>
+        <div><div class="t" dir="auto">${esc(state.cfg.title)}</div><div class="p" dir="auto">${esc(params)}</div></div>
+        <div class="pl">${logo}</div></div></th></tr>`;
+
+  // level 1 label always; level N label only once a level-N row of that group is visible
+  const headRow = "<tr>" + cols.map((c, i) => {
+    const show = c.level <= 1 || visible.has(c.group + "|" + c.level);
+    const active = !!state.filters[i];
+    const flt = (show || active)
+      ? `<button type="button" class="flt${active ? " active" : ""}" data-col="${i}" title="Filter">▼</button>`
+      : "";
+    return `<th dir="auto" class="${c.level ? "tree-col" : ""}">${show ? esc(c.header) : ""}${flt}</th>`;
+  }).join("") + "</tr>";
+
+  thead.innerHTML = printRow + headRow;
+}
+
+const toggleKey = (node, group) => node.id + "|" + group;
+
+function renderBody() {
+  const tbody = document.querySelector("#grid tbody");
+  const { columns, groups } = state.layout;
+  const delim = state.cfg.combineDelimiter ?? " | ";
+  const out = [];
+  const visible = new Set();
+
+  const toggleHtml = (node, group) => {
+    const kids = node.kids[group] || [];
+    if (!kids.length) return `<span class="tg-spacer"></span>`;
+    const open = state.expanded.has(toggleKey(node, group));
+    return `<button type="button" class="tg" data-id="${esc(toggleKey(node, group))}" title="${open ? "Collapse" : "Expand"}"><span class="${open ? "open" : ""}">↪</span></button>`;
+  };
+
+  const renderRow = node => {
+    const first = node.rows[0];                 // parent rows show the first child's values
+    const level = node.depth + 1;               // 1 = top row
+    const tds = columns.map(col => {
+      if (col.level) {
+        const mine = node.group === null ? col.level === 1 : (col.group === node.group && col.level === level);
+        if (!mine) return `<td class="tree-empty"></td>`;
+        const tg = col.first ? toggleHtml(node, col.group) : "";   // one toggle per level
+        return `<td class="tree" dir="auto">${tg}${esc(cellValue(col, first, delim))}</td>`;
+      }
+      const v = cellValue(col, first, delim);
+      return `<td dir="auto" class="${v.length > 30 ? "wrap" : ""}">${esc(v)}</td>`;
+    });
+    out.push(`<tr class="lvl${level}">${tds.join("")}</tr>`);
+  };
+
+  const walkGroup = (nodes, group) => nodes.forEach(node => {
+    visible.add(group + "|" + (node.depth + 1));
+    renderRow(node);
+    if (state.expanded.has(toggleKey(node, group))) walkGroup(node.kids[group], group);
+  });
+
+  state.tree.forEach(top => {
+    renderRow(top);
+    groups.forEach(g => {                       // each group opens under the top row, in column order
+      if (state.expanded.has(toggleKey(top, g.name))) walkGroup(top.kids[g.name], g.name);
+    });
+  });
+
+  renderHead(visible);
+  tbody.innerHTML = out.length
+    ? out.join("")
+    : `<tr><td class="empty" colspan="${columns.length}">No rows${Object.keys(state.filters).length ? " match the filter" : " returned"}.</td></tr>`;
+}
+
+function renderInfo() {
+  const top = state.tree.length;
+  const total = state.rowCount, shown = state.shownCount;
+  const rowsTxt = shown === total
+    ? `<b>${total}</b> rows returned`
+    : `<b>${shown}</b> of <b>${total}</b> rows (filtered)`;
+  document.getElementById("info").innerHTML = DEBUG
+    ? `All <b>${state.layout.columns.length}</b> SQL columns · ${rowsTxt}`
+    : `<b>${top}</b> rows shown (collapsed) · ${rowsTxt}`;
+}
+
+function allIds(nodes, acc = []) {
+  nodes.forEach(n => Object.entries(n.kids).forEach(([g, kids]) => {
+    if (kids.length) { acc.push(toggleKey(n, g)); allIds(kids, acc); }
+  }));
+  return acc;
+}
+
+/* =====================================================================
+   Page wiring
+   ===================================================================== */
+// ?...&dbg  -> show every column the procedure returns, original names, no grouping
+const DEBUG = new URLSearchParams(location.search).has("dbg");
+
+function debugLayout(sqlColumns) {
+  return {
+    columns: sqlColumns.map(c => ({ header: c, fields: [c], group: null, level: 0 })),
+    groups: [],
+    keyFields: []
+  };
+}
+
+/* ---------- Excel-style filters (normal and debug mode) ----------
+   state.filters = { columnNumber: Set of allowed values }  (no entry = no filter)
+   A column's value is what the cell shows (merged columns: the joined text). */
+state.filters = {};
+state.allRows = [];
+const BLANK = "\u0000";
+const fkey = v => (v === null || v === undefined || String(v).trim() === "") ? BLANK : String(v);
+const colKey = (col, r) => fkey(cellValue(col, r, state.cfg.combineDelimiter ?? " | "));
+
+function rowPasses(r, skipIdx) {
+  for (const [i, allowed] of Object.entries(state.filters))
+    if (i !== skipIdx && !allowed.has(colKey(state.layout.columns[i], r))) return false;
+  return true;
+}
+
+function applyFilters() {
+  const rows = state.allRows.filter(r => rowPasses(r));
+  state.shownCount = rows.length;
+  state.tree = buildTree(rows, state.layout);
+  renderBody();
+  renderInfo();
+  document.getElementById("clearFilters").hidden = !Object.keys(state.filters).length;
+}
+
+function closeFilterPopup() {
+  const old = document.querySelector(".fpop");
+  if (old) old.remove();
+}
+
+function openFilterPopup(btn) {
+  closeFilterPopup();
+  const ci = btn.dataset.col;
+  const col = state.layout.columns[ci];
+
+  // values offered = distinct values in rows that pass the OTHER columns' filters (like Excel)
+  const counts = new Map();
+  state.allRows.forEach(r => { if (rowPasses(r, ci)) { const k = colKey(col, r); counts.set(k, (counts.get(k) || 0) + 1); } });
+  const values = [...counts.keys()].sort((a, b) =>
+    a === BLANK ? 1 : b === BLANK ? -1 : a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const current = state.filters[ci];
+  const checked = new Set(values.filter(v => !current || current.has(v)));
+  const LIMIT = 1000;
+
+  const pop = document.createElement("div");
+  pop.className = "fpop";
+  pop.dataset.col = ci;
+  pop.innerHTML = `
+    <div class="ftitle" dir="auto">${esc(col.header)}</div>
+    <input type="search" placeholder="Search…" dir="auto">
+    <div class="flist"></div>
+    <div class="fbtns">
+      <button type="button" class="btn outline" data-act="clear">Clear</button>
+      <button type="button" class="btn outline" data-act="cancel">Cancel</button>
+      <button type="button" class="btn" data-act="ok">OK</button>
+    </div>`;
+  document.body.appendChild(pop);
+
+  const search = pop.querySelector("input");
+  const list = pop.querySelector(".flist");
+  let visible = values;
+
+  const draw = () => {
+    const q = search.value.trim().toLowerCase();
+    visible = q ? values.filter(v => v !== BLANK && v.toLowerCase().includes(q)) : values;
+    const allOn = visible.length && visible.every(v => checked.has(v));
+    list.innerHTML =
+      `<label class="all"><input type="checkbox" data-all ${allOn ? "checked" : ""}> (Select all)</label>` +
+      visible.slice(0, LIMIT).map(v => `<label dir="auto"><input type="checkbox" data-v="${esc(v)}" ${checked.has(v) ? "checked" : ""}>
+        ${v === BLANK ? '<span class="blank">(Blanks)</span>' : esc(v)} <span class="blank">(${counts.get(v)})</span></label>`).join("") +
+      (visible.length > LIMIT ? `<div class="more">${visible.length - LIMIT} more – use search</div>` : "");
+  };
+  draw();
+
+  list.addEventListener("change", e => {
+    const cb = e.target;
+    if (cb.hasAttribute("data-all")) visible.forEach(v => cb.checked ? checked.add(v) : checked.delete(v));
+    else { const v = cb.dataset.v; cb.checked ? checked.add(v) : checked.delete(v); }
+    draw();
+  });
+  search.addEventListener("input", () => {
+    // like Excel: searching selects exactly the matching values
+    const q = search.value.trim().toLowerCase();
+    if (q) { checked.clear(); values.forEach(v => { if (v !== BLANK && v.toLowerCase().includes(q)) checked.add(v); }); }
+    draw();
+  });
+  search.addEventListener("keydown", e => { if (e.key === "Enter") pop.querySelector('[data-act="ok"]').click(); });
+
+  pop.querySelector(".fbtns").addEventListener("click", e => {
+    const act = e.target.dataset.act;
+    if (!act) return;
+    if (act === "ok") {
+      const sel = new Set(values.filter(v => checked.has(v)));
+      if (sel.size === values.length) delete state.filters[ci]; else state.filters[ci] = sel;
+      applyFilters();
+    } else if (act === "clear") {
+      delete state.filters[ci];
+      applyFilters();
+    }
+    closeFilterPopup();
+  });
+
+  // position under the button, kept inside the window
+  const r = btn.getBoundingClientRect();
+  const left = Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 8);
+  pop.style.left = Math.max(8, left) + "px";
+  pop.style.top = (r.bottom + window.scrollY + 4) + "px";
+  search.focus();
+}
+
+document.querySelector("#grid thead").addEventListener("click", e => {
+  const btn = e.target.closest(".flt");
+  if (!btn) return;
+  e.stopPropagation();
+  const open = document.querySelector(".fpop");
+  if (open && open.dataset.col === btn.dataset.col) closeFilterPopup();
+  else openFilterPopup(btn);
+});
+document.addEventListener("mousedown", e => {
+  if (!e.target.closest(".fpop") && !e.target.closest(".flt")) closeFilterPopup();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeFilterPopup(); });
+document.querySelector(".table-wrap").addEventListener("scroll", closeFilterPopup);
+window.addEventListener("scroll", closeFilterPopup);
+document.getElementById("clearFilters").addEventListener("click", () => { state.filters = {}; applyFilters(); });
+if (DEBUG) document.body.classList.add("debug");
+
+/* ---------- print: orientation + shrink the table to fit the page width ----------
+   Printable width = A4 width minus 12 mm margins on each side:
+   landscape 297 - 24 = 273 mm, portrait 210 - 24 = 186 mm. */
+const orientSel = document.getElementById("orient");
+try { const o = localStorage.getItem("contentpage.orient"); if (o) orientSel.value = o; } catch (e) {}
+function applyOrientation() {
+  document.getElementById("pageSize").textContent = `@page { size: A4 ${orientSel.value}; margin: 12mm; }`;
+}
+orientSel.addEventListener("change", () => {
+  applyOrientation();
+  try { localStorage.setItem("contentpage.orient", orientSel.value); } catch (e) {}
+});
+applyOrientation();
+const printWidthPx = () => ((orientSel.value === "portrait" ? 210 : 297) - 2 * 12) * 96 / 25.4;
+
+window.addEventListener("beforeprint", () => {
+  applyOrientation();
+  closeFilterPopup();
+  const t = document.getElementById("grid");
+  t.classList.add("measure");                    // narrowest layout the print will use
+  const need = t.offsetWidth;
+  t.classList.remove("measure");
+  const z = Math.min(1, printWidthPx() / Math.max(need, 1));
+  t.style.setProperty("--print-zoom", z.toFixed(3));
+  t.style.setProperty("--inv", (1 / z).toFixed(3));
+});
+window.addEventListener("afterprint", () => {
+  const t = document.getElementById("grid");
+  t.style.removeProperty("--print-zoom");
+  t.style.removeProperty("--inv");
+});
+
+function applyConfig(cfg) {
+  state.cfg = cfg;
+  state.layout = buildLayout(cfg);
+  document.title = cfg.title;
+  document.getElementById("pageTitle").textContent = cfg.title;
+
+  const logo = document.getElementById("logo");
+  logo.onerror = () => {
+    const ph = document.createElement("div");
+    ph.className = "logo-fallback";
+    ph.textContent = "LOGO";
+    logo.replaceWith(ph);
+  };
+  logo.onload = () => { state.logoOk = true; if (state.layout && state.tree.length) renderBody(); };
+  if (cfg.logo) logo.src = cfg.logo; else logo.onerror();
+}
+
+async function run(mainpart, mainserial) {
+  const btn = document.getElementById("runBtn");
+  const msg = document.getElementById("msg");
+  btn.disabled = true; btn.textContent = "Running…";
+  try {
+    const data = await api("/api/contentpage/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mainpart, mainserial: mainserial || null, dbg: DEBUG })
+    });
+    const rows = data.rows || [];
+    if (data.missingFields && data.missingFields.length)
+      msg.textContent = "Warning – fields in the config not returned by SQL: " + data.missingFields.join(", ");
+    state.params = { mainpart, mainserial };
+    state.rowCount = rows.length;
+    state.expanded = new Set();          // start fully collapsed
+    if (DEBUG) state.layout = debugLayout(data.columns || Object.keys(rows[0] || {}));
+    state.allRows = rows;
+    state.filters = {};
+    applyFilters();
+    document.getElementById("results").hidden = false;
+
+    // keep the parameters in the URL so the result can be bookmarked / shared
+    const q = new URLSearchParams({ mainpart });
+    if (mainserial) q.set("mainserial", mainserial);
+    history.replaceState(null, "", "?" + q.toString() + (DEBUG ? "&dbg" : ""));
+  } catch (e) {
+    msg.textContent = e.message;
+    document.getElementById("results").hidden = true;
+  } finally {
+    btn.disabled = false; btn.textContent = "Run";
+  }
+}
+
+function onRun() {
+  const part = document.getElementById("mainPart").value.trim();
+  const serial = document.getElementById("mainSerial").value.trim();
+  const msg = document.getElementById("msg");
+  if (!part) { msg.textContent = "Main Part is required."; return; }
+  msg.textContent = "";
+  run(part, serial);
+}
+document.getElementById("runBtn").addEventListener("click", onRun);
+["mainPart", "mainSerial"].forEach(id =>
+  document.getElementById(id).addEventListener("keydown", e => { if (e.key === "Enter") onRun(); }));
+
+document.querySelector("#grid tbody").addEventListener("click", e => {
+  const btn = e.target.closest(".tg");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id);
+  renderBody();
+});
+
+document.getElementById("expandAll").onclick = () => { state.expanded = new Set(allIds(state.tree)); renderBody(); };
+document.getElementById("collapseAll").onclick = () => { state.expanded = new Set(); renderBody(); };
+document.getElementById("printBtn").onclick = () => window.print();
+/* =====================================================================
+   Excel export – a real .xlsx built in the browser (no library, no internet).
+   Exports the rows that pass the current filters, one line per SQL row,
+   with every configured column (all hierarchy levels, merged columns joined).
+   ===================================================================== */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+// minimal ZIP writer (stored, no compression) – enough for an .xlsx
+function zipFiles(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+  files.forEach(({ name, data }) => {
+    const nameB = enc.encode(name), body = enc.encode(data), crc = crc32(body);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true); local.setUint16(4, 20, true); local.setUint16(6, 0x0800, true);
+    local.setUint16(8, 0, true); local.setUint32(14, crc, true);
+    local.setUint32(18, body.length, true); local.setUint32(22, body.length, true);
+    local.setUint16(26, nameB.length, true);
+    parts.push(new Uint8Array(local.buffer), nameB, body);
+
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true);
+    cen.setUint16(8, 0x0800, true); cen.setUint32(16, crc, true);
+    cen.setUint32(20, body.length, true); cen.setUint32(24, body.length, true);
+    cen.setUint16(28, nameB.length, true); cen.setUint32(42, offset, true);
+    central.push(new Uint8Array(cen.buffer), nameB);
+    offset += 30 + nameB.length + body.length;
+  });
+  const cenSize = central.reduce((n, a) => n + a.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cenSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)],
+    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+const xmlEsc = s => String(s)
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+  .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const colLetter = n => { let s = ""; n++; while (n) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; } return s; };
+
+function buildXlsx(headers, rows) {
+  const widths = headers.map(h => String(h).length);
+  const cell = (v, ref, style) => {
+    if (typeof v === "number" && isFinite(v)) return `<c r="${ref}"${style}><v>${v}</v></c>`;
+    if (v === null || v === undefined || v === "") return "";
+    return `<c r="${ref}" t="inlineStr"${style}><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+  };
+  const sheetRows = [];
+  sheetRows.push(`<row r="1">${headers.map((h, i) => cell(h, colLetter(i) + 1, ' s="1"')).join("")}</row>`);
+  rows.forEach((r, ri) => {
+    r.forEach((v, i) => { if (v !== null && v !== undefined) widths[i] = Math.max(widths[i], String(v).length); });
+    sheetRows.push(`<row r="${ri + 2}">${r.map((v, i) => cell(v, colLetter(i) + (ri + 2), "")).join("")}</row>`);
+  });
+  const lastCol = colLetter(Math.max(headers.length - 1, 0));
+  const cols = widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${Math.min(Math.max(w + 3, 8), 60)}" customWidth="1"/>`).join("");
+
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>${cols}</cols>
+<sheetData>${sheetRows.join("")}</sheetData>
+<autoFilter ref="A1:${lastCol}${rows.length + 1}"/>
+</worksheet>`;
+
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF153E70"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+  return zipFiles([
+    { name: "[Content_Types].xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>` },
+    { name: "_rels/.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>` },
+    { name: "xl/workbook.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="Data" sheetId="1" r:id="rId1"/></sheets>
+<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">Data!$A$1:$${lastCol}$${rows.length + 1}</definedName></definedNames>
+</workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>` },
+    { name: "xl/worksheets/sheet1.xml", data: sheet },
+    { name: "xl/styles.xml", data: styles }
+  ]);
+}
+
+document.getElementById("xlsBtn").onclick = () => {
+  const cols = state.layout.columns;
+  const delim = state.cfg.combineDelimiter ?? " | ";
+  const rows = state.allRows.filter(r => rowPasses(r)).map(r => cols.map(c => {
+    if (c.fields.length === 1) { const v = r[c.fields[0]]; return v === undefined ? null : v; }
+    return cellValue(c, r, delim);                       // merged column: joined text
+  }));
+  const blob = buildXlsx(cols.map(c => c.header), rows);
+  const name = `${state.cfg.title} - ${state.params.mainpart}${state.params.mainserial ? " - " + state.params.mainserial : ""}`
+    .replace(/[\\/:*?"<>|]/g, "_") + ".xlsx";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+
+document.getElementById("pdfBtn").onclick = () => {
+  // Opens the print dialog -> "Save as PDF". The title becomes the suggested file name.
+  const old = document.title;
+  document.title = `${state.cfg.title} - ${state.params.mainpart}`;
+  window.print();
+  document.title = old;
+};
+
+(async function init() {
+  const runBtn = document.getElementById("runBtn");
+  runBtn.disabled = true;
+  try {
+    applyConfig(await api("/api/contentpage/config"));
+    runBtn.disabled = false;
+  } catch (e) {
+    document.getElementById("msg").textContent = "Cannot load configuration: " + e.message;
+    return;
+  }
+  // ?mainpart=...&mainserial=... opens the page and runs directly
+  const q = new URLSearchParams(location.search);
+  if (q.get("mainpart")) {
+    document.getElementById("mainPart").value = q.get("mainpart");
+    document.getElementById("mainSerial").value = q.get("mainserial") || "";
+    onRun();
+  } else {
+    document.getElementById("mainPart").focus();
+  }
+})();
+</script>
+</body>
+</html>

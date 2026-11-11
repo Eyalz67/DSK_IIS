@@ -1,0 +1,13 @@
+# real config holds the SQL password - never commit it
+dsk-api/config/content_page.json
+
+# Python
+__pycache__/
+*.pyc
+
+# IIS / Python logs
+dsk-api/logs/
+
+# local test output
+*.pdf
+*.xlsx

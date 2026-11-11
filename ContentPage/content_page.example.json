@@ -1,0 +1,27 @@
+{
+  "title": "דף תוכן",
+  "logo": "/IMG/company_logo.png",
+
+  "connection": {
+    "dsn": "DSK_SQL",
+    "uid": "dsk_reader",
+    "pwd": "CHANGE_ME",
+    "procedure": "dbo.usp_GetAbPartTree",
+    "queryTimeout": 60
+  },
+
+  "combineDelimiter": " | ",
+
+  "fields": [
+    { "field": "Inspection_Nbr", "alias": "דוח בחינה", "fieldIndex": 1 },
+    { "field": "Process",                              "fieldIndex": 2 },
+    { "field": "part",           "alias": "פריט",      "fieldIndex": 3 },
+    { "field": "Eqms_Item_Desc",                       "fieldIndex": 4 },
+    { "field": "Clean_Lot",      "alias": "Serial",    "fieldIndex": 5, "group": "Serial", "groupIndex": 1 },
+    { "field": "Document",                                              "group": "Serial", "groupIndex": 2 },
+    { "field": "Rev",                                                   "group": "Serial", "groupIndex": 3 },
+    { "field": "Heter1",         "alias": "התרים",     "fieldIndex": 6 },
+    { "field": "Heter2",         "alias": "התרים" },
+    { "field": "Heter3",         "alias": "התרים" }
+  ]
+}
