@@ -88,6 +88,129 @@
   .msg { width: 100%; font-size: 13px; color: var(--error); white-space: pre-wrap; }
   .msg:empty { display: none; }
 
+  /* ---------- completion ring (input panel, far end) ---------- */
+  .ring { position: relative; width: 84px; height: 84px; flex: none; align-self: center; cursor: default; }
+  .ring[hidden] { display: none; }
+  .ring svg { transform: rotate(-90deg); display: block; }
+  .ring .bgc { stroke: #edf1f7; }
+  .ring .fg { stroke: #1f5edb; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1); }
+  .ring b {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 21px; font-weight: 600; color: var(--ink); direction: ltr;
+  }
+
+  /* ---------- progress card while the report is loading ---------- */
+  .progress {
+    margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px 24px 16px; font-size: 14.5px; animation: pgIn .25s ease-out;
+  }
+  .progress[hidden] { display: none; }
+  .progress.leaving { opacity: 0; transform: translateY(-4px); transition: opacity .35s, transform .35s; }
+  .pg-head { display: flex; align-items: center; gap: 12px; }
+  /* circular progress inside the card – fills as the step lines complete */
+  .pg-wrap { display: flex; align-items: center; gap: 28px; }
+  .pg-main { flex: 1; min-width: 0; }
+  .pg-ring { position: relative; width: 96px; height: 96px; flex: none; }
+  .pg-ring svg { transform: rotate(-90deg); display: block; }
+  .pg-ring .bgc { stroke: #edf1f7; }
+  .pg-ring .fg { stroke: #1f5edb; stroke-linecap: round; transition: stroke-dashoffset .35s ease-out, stroke .3s; }
+  .progress.done .pg-ring .fg { stroke: #0e7c66; }
+  .pg-ring b {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 600; color: var(--ink); direction: ltr;
+  }
+  .spinner {
+    width: 22px; height: 22px; flex: none; border-radius: 50%;
+    border: 2.4px solid #d6e0f5; border-top-color: #1f5edb; animation: spin .8s linear infinite;
+  }
+  .progress.done .spinner { animation: none; border-color: #0e7c66; background: #0e7c66; position: relative; }
+  .progress.done .spinner::after {
+    content: ""; position: absolute; left: 6px; top: 3px; width: 5px; height: 9px;
+    border: solid #fff; border-width: 0 2.2px 2.2px 0; transform: rotate(45deg);
+  }
+  .pg-heads { height: 30px; overflow: hidden; flex: 1; min-width: 0; }
+  .pg-heads-in { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .pg-heads-in div { height: 30px; line-height: 30px; font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pg-heads-in .ok { color: #0e7c66; }
+  .shimmer {
+    background-image: linear-gradient(90deg, #8a9ab2 0%, #8a9ab2 35%, var(--ink) 50%, #8a9ab2 65%, #8a9ab2 100%);
+    background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shimmer 1.6s linear infinite;
+  }
+  .pg-elapsed { font-family: Consolas, "Courier New", monospace; font-size: 13px; color: var(--muted); direction: ltr; }
+  .pg-lines {
+    list-style: none; margin: 14px 10px 0 0; padding: 0; padding-inline-start: 20px;
+    border-inline-start: 1.5px solid #e1e7f0; display: flex; flex-direction: column; gap: 7px;
+  }
+  .pg-lines li { display: flex; align-items: center; gap: 10px; color: #33445c; animation: lineIn .25s ease-out; }
+  .pg-lines .mk { width: 14px; display: inline-flex; justify-content: center; color: #0e7c66; font-weight: 700; }
+  .pg-lines li.cur { font-weight: 500; }
+  .pg-lines li.cur .mk::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; background: #1f5edb; animation: blink .9s ease-in-out infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: 0 0; } }
+  @keyframes blink { 50% { opacity: .3; } }
+  @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes pgIn { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner, .shimmer, .pg-lines li, .pg-lines li.cur .mk::before, .progress { animation: none !important; }
+    .shimmer { color: var(--ink); background: none; }
+  }
+
+  /* ---------- open tasks stripe ---------- */
+  .tasks {
+    margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px 16px;
+  }
+  .tasks[hidden] { display: none; }
+  .tasks-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .tasks-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .tasks-badge {
+    min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
+    background: #e8681a; color: #fff; font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .task { border-radius: 8px; margin-top: 10px; }
+  .task-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; min-height: 56px; }
+  .task-icon {
+    width: 36px; height: 36px; border-radius: 6px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .task-count { font-size: 22px; font-weight: 600; min-width: 1.4em; }
+  .task-label { font-size: 15px; font-weight: 600; }
+  .task-more {
+    margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 6px 8px; border-radius: 5px;
+    font: inherit; font-size: 13px; color: var(--muted); cursor: pointer;
+  }
+  .task-more:hover:not(:disabled) { background: rgba(21, 62, 112, .07); color: var(--navy); }
+  .task-more:disabled { opacity: .45; cursor: default; }
+  .task-more .chev { display: inline-block; transition: transform .15s; font-size: 11px; }
+  .task.open .task-more .chev { transform: rotate(180deg); }
+  .task-details { display: none; padding: 0 14px 14px; }
+  .task.open .task-details { display: block; }
+
+  /* missing inspection: orange */
+  .task-insp { background: #fff6ef; border: 1px solid #f3c6a5; }
+  .task-insp .task-icon { background: #e8681a; color: #fff; }
+  .task-insp .task-count { color: #b5470f; }
+  .task-insp .task-label { color: #b5470f; }
+  /* missing serial: grey, dashed */
+  .task-sr { background: #f5f7fb; border: 1px dashed #8a97ad; }
+  .task-sr .task-icon { border: 1.5px dashed #8a97ad; color: var(--ink); background: #fff; font-size: 15px; }
+  .task-sr .task-count, .task-sr .task-label { color: #2e3b4e; }
+
+  .dtable-wrap { max-height: 340px; overflow: auto; border: 1px solid var(--cell-line); border-radius: 6px; background: #fff; }
+  table.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.dtable th {
+    position: sticky; top: 0; background: var(--row-alt); color: var(--navy); font-weight: 700; font-size: 12px;
+    text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--cell-line); white-space: nowrap;
+  }
+  table.dtable td { padding: 6px 10px; border-bottom: 1px solid var(--cell-line); text-align: left; }
+  table.dtable tr:last-child td { border-bottom: none; }
+  table.dtable tbody tr:hover td { background: var(--row-hover); }
+
   /* ---------- results ---------- */
   .results { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
   .results[hidden] { display: none; }
@@ -164,7 +287,7 @@
   .fpop .more { color: var(--muted); font-size: 12px; padding: 4px 0; }
   .fpop .fbtns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
   .fpop .fbtns .btn { padding: 5px 12px; font-size: 12px; }
-  #clearFilters[hidden] { display: none; }
+  #clearFilters[hidden], #logBtn[hidden] { display: none; }
   .orient {
     padding: 6px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
     border: 1px solid var(--navy); border-radius: 5px; background: #fff; color: var(--navy);
@@ -180,7 +303,7 @@
   @media print {
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { background: #fff; font-size: 11px; }
-    .search, .toolbar, .topbar { display: none !important; }
+    .search, .toolbar, .topbar, .ring, .progress { display: none !important; }
     tr.print-only { display: table-row; }
     th.print-title {
       background: #fff !important; color: var(--ink); text-align: center; font-weight: 400;
@@ -234,8 +357,19 @@
     </label>
     <button type="button" class="btn primary" id="runBtn">Run</button>
     <nav class="panel-links" id="panelLinks"></nav><!-- links will go here, e.g. <a href="...">Link</a> -->
+    <div class="ring" id="ring" hidden>
+      <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+        <circle class="bgc" cx="42" cy="42" r="36" fill="none" stroke-width="8"/>
+        <circle class="fg" id="ringFg" cx="42" cy="42" r="36" fill="none" stroke-width="8"/>
+      </svg>
+      <b id="ringPct">0%</b>
+    </div>
     <div class="msg" id="msg"></div>
   </div>
+
+  <section class="progress" id="progress" dir="rtl" aria-live="polite" hidden></section>
+
+  <section class="tasks" id="tasks" hidden></section>
 
   <section class="results" id="results" hidden>
     <div class="toolbar">
@@ -251,6 +385,7 @@
         <button type="button" class="btn" id="printBtn">Print</button>
         <button type="button" class="btn" id="pdfBtn">Download PDF</button>
         <button type="button" class="btn" id="xlsBtn">Download Excel</button>
+        <button type="button" class="btn outline" id="logBtn" hidden>Download log</button>
       </div>
     </div>
     <div class="table-wrap">
@@ -403,10 +538,191 @@ function buildTree(rows, layout) {
 /* =====================================================================
    Rendering
    ===================================================================== */
-const state = { cfg: null, layout: null, tree: [], expanded: new Set(), rowCount: 0, params: {} };
+const state = { cfg: null, layout: null, tree: [], expanded: new Set(), rowCount: 0, params: {},
+                tasksOpen: new Set(), fieldKey: f => f };
 
 const isEmpty = v => v === null || v === undefined || String(v).trim() === "";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* =====================================================================
+   Open tasks – calculation (config: openTasks)
+   1. missingSR   : distinct calcPart where EVERY row has an empty calcSR
+   2. missingINSP : rows of the parts NOT in 1, per item (inspGroupBy, e.g. Eqms_Item + Eqms_Item_Desc):
+                    case 1 – the item has no calcSerial on any row        -> 1 (serial empty)
+                    case 2 – each calcSerial of the item with no calcINSP  -> 1 per serial
+                    A NULL-serial row in an item that does have serials is ignored: not counted and
+                    not shown in the main table.
+                    Only NULL is missing here ('' and spaces are values, like in SQL).
+   Rows counted in 1 or 2 are removed from the main table (okRows).
+   completePct (set in run(), needs the table layout):
+     main-table rows (collapsed) / (main-table rows + missingSR items + missingINSP items) * 100
+   Always runs on the full procedure result (filters do not affect it).
+   ===================================================================== */
+function computeOpenTasks(rows, ot, fieldKey = f => f, trace = null) {
+  const empty = { okRows: rows, missingSR: [], missingINSP: [], mainRows: 0, completePct: 100, enabled: false };
+  if (!ot || !ot.calcPart) { if (trace) trace.push("openTasks is not configured (no calcPart) – nothing calculated."); return empty; }
+
+  const P = fieldKey(ot.calcPart), SR = fieldKey(ot.calcSR),
+        SN = fieldKey(ot.calcSerial), IN = fieldKey(ot.calcINSP);
+  const val = (r, f) => (f && r[f] !== undefined && r[f] !== null) ? String(r[f]).trim() : "";
+
+  // ---- trace helpers: row numbers = position in the procedure result (1 = first row)
+  const T = (...l) => { if (trace) trace.push(...l); };
+  const rowNo = new Map(rows.map((r, i) => [r, i + 1]));
+  const nums = list => {
+    const n = list.map(r => "#" + rowNo.get(r));
+    return n.length > 20 ? n.slice(0, 20).join(", ") + ` … (+${n.length - 20} more)` : n.join(", ");
+  };
+  const show = v => v === null || v === undefined ? "NULL" : `'${v}'`;
+
+  // 1. group by part
+  const byPart = new Map();
+  rows.forEach(r => {
+    const k = val(r, P);
+    if (!byPart.has(k)) byPart.set(k, []);
+    byPart.get(k).push(r);
+  });
+  const srParts = new Set();
+  const missingSR = [];
+  T("", "=".repeat(78), `1. MISSING SERIAL  –  per ${ot.calcPart}: counted when EVERY row has an empty ${ot.calcSR}`,
+    `   (empty = NULL, '' or spaces)   parts checked: ${byPart.size}`, "=".repeat(78));
+  byPart.forEach((pr, k) => {
+    if (pr.every(r => val(r, SR) === "")) {
+      srParts.add(k); missingSR.push({ key: k, rows: pr, first: pr[0] });
+      const kinds = {};
+      pr.forEach(r => { const v = r[SR]; const t = v === null || v === undefined ? "NULL" : String(v) === "" ? "''" : "spaces"; kinds[t] = (kinds[t] || 0) + 1; });
+      T(`[COUNTED]  ${ot.calcPart} ${show(k)}`,
+        `           all ${pr.length} rows have empty ${ot.calcSR} (${Object.entries(kinds).map(([t, c]) => `${t} x${c}`).join(", ")})`,
+        `           row numbers: ${nums(pr)}  -> removed from the main table`);
+    } else {
+      const hit = pr.find(r => val(r, SR) !== "");
+      T(`[ok]       ${ot.calcPart} ${show(k)}  –  ${ot.calcSR} = ${show(hit[SR])} on row #${rowNo.get(hit)}`);
+    }
+  });
+
+  // 2. remaining parts, grouped by inspGroupBy (default: calcPart)
+  const groupBy = (Array.isArray(ot.inspGroupBy) && ot.inspGroupBy.length ? ot.inspGroupBy : [ot.calcPart]).map(fieldKey);
+  const isNull = v => v === null || v === undefined;
+  const byGroup = new Map();
+  rows.forEach(r => {
+    if (srParts.has(val(r, P))) return;
+    const k = JSON.stringify(groupBy.map(f => isNull(r[f]) ? null : String(r[f])));
+    if (!byGroup.has(k)) byGroup.set(k, []);
+    byGroup.get(k).push(r);
+  });
+  const missingINSP = [];
+  const removed = new Set();
+  const hidden = new Set();               // NULL-serial rows of items that have serials
+  missingSR.forEach(m => m.rows.forEach(r => removed.add(r)));
+  const addMissing = (key, list) => { missingINSP.push({ key, rows: list, first: list[0] }); list.forEach(r => removed.add(r)); };
+  const gNames = groupBy.join(" + ");
+  const skipped = rows.filter(r => srParts.has(val(r, P))).length;
+  T("", "=".repeat(78), `2. MISSING INSPECTION  –  per item (${gNames})`,
+    `   case 1: the item has no ${ot.calcSerial} on any row            -> 1`,
+    `   case 2: each ${ot.calcSerial} of the item with no ${ot.calcINSP}  -> 1 per serial`,
+    `   a NULL ${ot.calcSerial} row in an item that has serials is ignored (not counted, hidden from the main table)`,
+    `   only NULL counts as missing here ('' and spaces are values)`,
+    `   rows skipped because their part is in MISSING SERIAL: ${skipped}`,
+    `   items checked: ${byGroup.size}`, "=".repeat(78));
+  byGroup.forEach((gr, k) => {
+    const label = JSON.parse(k).map(show).join(" / ");
+    const withSerial = gr.filter(r => !isNull(r[SN]));
+    if (!withSerial.length) {                                              // case 1: item has no serial at all
+      addMissing(k + "|", gr);
+      T(`[COUNTED]  item ${label}  –  CASE 1`,
+        `           none of its ${gr.length} rows has a ${ot.calcSerial} (all NULL)`,
+        `           row numbers: ${nums(gr)}  -> removed from the main table`);
+      return;
+    }
+    const bySerial = new Map();                                            // case 2: each serial on its own
+    withSerial.forEach(r => {
+      const sn = String(r[SN]);
+      if (!bySerial.has(sn)) bySerial.set(sn, []);
+      bySerial.get(sn).push(r);
+    });
+    T(`item ${label}  –  ${bySerial.size} serial(s)`);
+    bySerial.forEach((sr, sn) => {
+      if (sr.every(r => isNull(r[IN]))) {
+        addMissing(k + "|" + sn, sr);
+        T(`  [COUNTED]  serial ${show(sn)}  –  CASE 2`,
+          `             ${sr.length} row(s) with this serial, none has a ${ot.calcINSP} (all NULL)`,
+          `             row numbers: ${nums(sr)}  -> removed from the main table`);
+      } else {
+        const hit = sr.find(r => !isNull(r[IN]));
+        T(`  [ok]       serial ${show(sn)}  –  ${ot.calcINSP} = ${show(hit[IN])} on row #${rowNo.get(hit)}`);
+      }
+    });
+    const nullRows = gr.filter(r => isNull(r[SN]));
+    if (nullRows.length) {
+      nullRows.forEach(r => hidden.add(r));                                 // not counted, not shown
+      T(`  [ignored]  ${nullRows.length} row(s) with NULL ${ot.calcSerial} – the item has serials, so they are not counted`,
+        `             row numbers: ${nums(nullRows)}  -> hidden from the main table`);
+    }
+  });
+
+  return {
+    enabled: true,
+    okRows: rows.filter(r => !removed.has(r) && !hidden.has(r)),
+    hiddenCount: hidden.size,
+    missingSR, missingINSP, mainRows: 0, completePct: 100
+  };
+}
+
+/* ---------- open tasks stripe – rendering ---------- */
+const ICON_WARN = `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 3.5 22 20.5H2Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M12 10v4.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="#fff"/></svg>`;
+
+function renderTasks() {
+  const box = document.getElementById("tasks");
+  const ot = state.openTasks;
+  const cfg = state.cfg.openTasks;
+  if (!ot || !ot.enabled || !cfg) { box.hidden = true; box.innerHTML = ""; return; }
+
+  const sections = [                                  // order as in the design
+    { id: "missingINSP", cls: "task-insp", icon: ICON_WARN, items: ot.missingINSP, def: cfg.missingINSP || {} },
+    { id: "missingSR",   cls: "task-sr",   icon: "?",       items: ot.missingSR,   def: cfg.missingSR || {} }
+  ];
+  const total = ot.missingINSP.length + ot.missingSR.length;
+
+  const detailsTable = sec => {
+    const fields = sec.def.fields || [];
+    if (!fields.length) return `<div class="empty">No fields configured for this list.</div>`;
+    const head = fields.map(f => `<th dir="auto">${esc((f.alias && f.alias.trim()) || f.field)}</th>`).join("");
+    const body = sec.items.map(it => "<tr>" + fields.map(f => {
+      // all distinct values of the item's rows (e.g. several serials without inspection)
+      const k = state.fieldKey(f.field);
+      const vals = [...new Set(it.rows.map(r => r[k]).filter(v => !isEmpty(v)).map(String))];
+      return `<td dir="auto">${esc(vals.join(state.cfg.combineDelimiter ?? " | "))}</td>`;
+    }).join("") + "</tr>").join("");
+    return `<div class="dtable-wrap"><table class="dtable"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  };
+
+  box.innerHTML =
+    `<div class="tasks-head"><span class="tasks-title">משימות פתוחות</span><span class="tasks-badge">${total}</span></div>` +
+    sections.map(sec => {
+      const n = sec.items.length;
+      const open = n && state.tasksOpen.has(sec.id);
+      return `<div class="task ${sec.cls}${open ? " open" : ""}" data-sec="${sec.id}">
+        <div class="task-row">
+          <span class="task-icon">${sec.icon}</span>
+          <span class="task-count">${n}</span>
+          <span class="task-label" dir="auto">${esc(sec.def.label || sec.id)}</span>
+          <button type="button" class="task-more" ${n ? "" : "disabled"} aria-expanded="${open ? "true" : "false"}">פרטים <span class="chev">▼</span></button>
+        </div>
+        <div class="task-details">${n ? detailsTable(sec) : ""}</div>
+      </div>`;
+    }).join("");
+  box.hidden = false;
+}
+
+document.getElementById("tasks").addEventListener("click", e => {
+  const btn = e.target.closest(".task-more");
+  if (!btn || btn.disabled) return;
+  const id = btn.closest(".task").dataset.sec;
+  state.tasksOpen.has(id) ? state.tasksOpen.delete(id) : state.tasksOpen.add(id);
+  renderTasks();
+});
 
 function cellValue(col, row, delim) {
   const vals = col.fields.map(f => row[f]).filter(v => !isEmpty(v));
@@ -495,11 +811,13 @@ function renderInfo() {
   const top = state.tree.length;
   const total = state.rowCount, shown = state.shownCount;
   const rowsTxt = shown === total
-    ? `<b>${total}</b> rows returned`
+    ? `<b>${total}</b> OK rows`
     : `<b>${shown}</b> of <b>${total}</b> rows (filtered)`;
-  document.getElementById("info").innerHTML = DEBUG
+  const ot = state.openTasks;
+  const otTxt = "";
+  document.getElementById("info").innerHTML = (DEBUG
     ? `All <b>${state.layout.columns.length}</b> SQL columns · ${rowsTxt}`
-    : `<b>${top}</b> rows shown (collapsed) · ${rowsTxt}`;
+    : `<b>${top}</b> rows shown (collapsed) · ${rowsTxt}`) + otTxt;
 }
 
 function allIds(nodes, acc = []) {
@@ -561,7 +879,7 @@ function openFilterPopup(btn) {
   const counts = new Map();
   state.allRows.forEach(r => { if (rowPasses(r, ci)) { const k = colKey(col, r); counts.set(k, (counts.get(k) || 0) + 1); } });
   const values = [...counts.keys()].sort((a, b) =>
-    a === BLANK ? 1 : b === BLANK ? -1 : a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+    a === BLANK ? -1 : b === BLANK ? 1 : a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));   // (Blanks) first
   const current = state.filters[ci];
   const checked = new Set(values.filter(v => !current || current.has(v)));
   const LIMIT = 1000;
@@ -590,7 +908,7 @@ function openFilterPopup(btn) {
     const allOn = visible.length && visible.every(v => checked.has(v));
     list.innerHTML =
       `<label class="all"><input type="checkbox" data-all ${allOn ? "checked" : ""}> (Select all)</label>` +
-      visible.slice(0, LIMIT).map(v => `<label dir="auto"><input type="checkbox" data-v="${esc(v)}" ${checked.has(v) ? "checked" : ""}>
+      visible.slice(0, LIMIT).map((v, i) => `<label dir="auto"><input type="checkbox" data-i="${i}" ${checked.has(v) ? "checked" : ""}>
         ${v === BLANK ? '<span class="blank">(Blanks)</span>' : esc(v)} <span class="blank">(${counts.get(v)})</span></label>`).join("") +
       (visible.length > LIMIT ? `<div class="more">${visible.length - LIMIT} more – use search</div>` : "");
   };
@@ -599,7 +917,7 @@ function openFilterPopup(btn) {
   list.addEventListener("change", e => {
     const cb = e.target;
     if (cb.hasAttribute("data-all")) visible.forEach(v => cb.checked ? checked.add(v) : checked.delete(v));
-    else { const v = cb.dataset.v; cb.checked ? checked.add(v) : checked.delete(v); }
+    else { const v = visible[+cb.dataset.i]; cb.checked ? checked.add(v) : checked.delete(v); }   // index: (Blanks) is an invisible character
     draw();
   });
   search.addEventListener("input", () => {
@@ -698,10 +1016,123 @@ function applyConfig(cfg) {
   if (cfg.logo) logo.src = cfg.logo; else logo.onerror();
 }
 
+/* ---------- completion ring ---------- */
+const RING_C = 2 * Math.PI * 36;
+function renderRing() {
+  const ring = document.getElementById("ring");
+  const ot = state.openTasks;
+  if (!ot || !ot.enabled) { ring.hidden = true; return; }
+  const pct = Math.max(0, Math.min(100, ot.completePct));
+  const fg = document.getElementById("ringFg");
+  fg.style.strokeDasharray = RING_C.toFixed(2);
+  fg.style.strokeDashoffset = RING_C.toFixed(2);              // start empty, then animate
+  document.getElementById("ringPct").textContent = pct + "%";
+  const denom = ot.mainRows + ot.missingSR.length + ot.missingINSP.length;
+  ring.title = `Complete: ${pct}%\n${ot.mainRows} rows in the main table / ` +
+               `(${ot.mainRows} + ${ot.missingSR.length} missing serial + ${ot.missingINSP.length} missing inspection = ${denom})`;
+  ring.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fg.style.strokeDashoffset = (RING_C * (1 - pct / 100)).toFixed(2);
+  }));
+}
+
+/* ---------- progress card (for show: the steps run on a timer while the data loads,
+   then fast-forward when the data arrives and the card disappears) ---------- */
+const PG_STEPS = [
+  "מתחבר ל-SQL Server", "מריץ את הפרוצדורה", "טוען את עץ הפריט", "מקבל את רשימת הסריאליים",
+  "בודק סריאליים חסרים", "בודק דוחות בחינה חסרים", "מסנן את השורות התקינות", "בונה את עץ התצוגה", "מכין את התצוגה"
+];
+const PG_RING_C = 2 * Math.PI * 41;
+const PG_HEADS = ["מחפש נתונים", "בודק מה חסר", "מכין את דף התוכן", "דף התוכן מוכן"];
+
+const progress = (() => {
+  let runId = 0, step = 0, started = 0, timer = null, tick = null, arrived = false, onDone = null, adv = null;
+  const el = () => document.getElementById("progress");
+  const secs = () => ((Date.now() - started) / 1000).toFixed(1) + "s";
+  const headOf = (i, done) => done ? 3 : (i < 3 ? 0 : i < 6 ? 1 : 2);
+
+  function draw(done) {
+    const h = headOf(step, done);
+    const heads = el().querySelector(".pg-heads-in");
+    heads.style.transform = `translateY(${-30 * h}px)`;
+    [...heads.children].forEach((d, i) => d.className = i === 3 ? "ok" : (!done && i === h ? "shimmer" : ""));
+    const last = done ? PG_STEPS.length - 1 : step;
+    el().querySelector(".pg-lines").innerHTML = PG_STEPS.slice(0, last + 1).map((t, i) => {
+      const cur = !done && i === step;
+      return `<li class="${cur ? "cur" : ""}"><span class="mk">${cur ? "" : "✓"}</span><span class="${cur ? "shimmer" : ""}">${esc(t)}</span></li>`;
+    }).join("");
+    el().classList.toggle("done", !!done);
+    // ring = finished steps / all steps (100% when the data is in)
+    const pct = done ? 100 : Math.round(step / PG_STEPS.length * 100);
+    el().querySelector(".pg-ring .fg").setAttribute("stroke-dashoffset", (PG_RING_C * (1 - pct / 100)).toFixed(2));
+    el().querySelector(".pg-pct").textContent = pct + "%";
+  }
+
+  function start(expectedSeconds) {
+    const id = ++runId;
+    step = 0; arrived = false; started = Date.now(); onDone = null;
+    clearTimeout(timer); clearInterval(tick);
+    const box = el();
+    box.classList.remove("leaving", "done");
+    box.innerHTML =
+      `<div class="pg-wrap"><div class="pg-main">
+         <div class="pg-head"><span class="spinner" aria-hidden="true"></span>
+           <div class="pg-heads"><div class="pg-heads-in">${PG_HEADS.map(h => `<div>${esc(h)}</div>`).join("")}</div></div>
+           <span class="pg-elapsed" id="pgElapsed">0.0s</span></div>
+         <ul class="pg-lines"></ul>
+       </div>
+       <div class="pg-ring" aria-hidden="true">
+         <svg width="96" height="96" viewBox="0 0 96 96">
+           <circle class="bgc" cx="48" cy="48" r="41" fill="none" stroke-width="9"/>
+           <circle class="fg" cx="48" cy="48" r="41" fill="none" stroke-width="9"
+                   stroke-dasharray="${PG_RING_C.toFixed(2)}" stroke-dashoffset="${PG_RING_C.toFixed(2)}"/>
+         </svg>
+         <b class="pg-pct">0%</b>
+       </div></div>`;
+    box.hidden = false;
+    draw(false);
+    const stepMs = Math.max(250, (expectedSeconds || 3) * 1000 / PG_STEPS.length);
+    tick = setInterval(() => { const e = document.getElementById("pgElapsed"); if (e && id === runId) e.textContent = secs(); }, 100);
+    adv = () => {
+      if (id !== runId) return;
+      if (step < PG_STEPS.length - 1) { step++; draw(false); timer = setTimeout(adv, arrived ? 90 : stepMs); return; }
+      if (arrived) { finishNow(id); return; }
+      timer = setTimeout(adv, 150);                     // last step keeps shimmering until the data arrives
+    };
+    timer = setTimeout(adv, stepMs);
+  }
+
+  function finishNow(id) {
+    clearInterval(tick);
+    document.getElementById("pgElapsed").textContent = secs();
+    draw(true);
+    timer = setTimeout(() => {
+      if (id !== runId) return;
+      el().classList.add("leaving");
+      timer = setTimeout(() => { if (id !== runId) return; el().hidden = true; el().classList.remove("leaving"); }, 350);
+      if (onDone) onDone();
+    }, 450);
+  }
+
+  // data arrived: run the remaining steps quickly, resolve when the card is done
+  function finish() {
+    return new Promise(res => {
+      onDone = res; arrived = true;
+      clearTimeout(timer); adv();
+    });
+  }
+
+  function fail() { runId++; clearTimeout(timer); clearInterval(tick); el().hidden = true; }
+  return { start, finish, fail };
+})();
+
 async function run(mainpart, mainserial) {
   const btn = document.getElementById("runBtn");
   const msg = document.getElementById("msg");
   btn.disabled = true; btn.textContent = "Running…";
+  msg.textContent = "";
+  ["results", "tasks", "ring"].forEach(id => document.getElementById(id).hidden = true);
+  progress.start(state.cfg.progressSeconds);
   try {
     const data = await api("/api/contentpage/run", {
       method: "POST",
@@ -712,12 +1143,63 @@ async function run(mainpart, mainserial) {
     if (data.missingFields && data.missingFields.length)
       msg.textContent = "Warning – fields in the config not returned by SQL: " + data.missingFields.join(", ");
     state.params = { mainpart, mainserial };
-    state.rowCount = rows.length;
     state.expanded = new Set();          // start fully collapsed
     if (DEBUG) state.layout = debugLayout(data.columns || Object.keys(rows[0] || {}));
-    state.allRows = rows;
+
+    // in debug mode the keys are the SQL names – match config names case-insensitively
+    const keyMap = new Map(Object.keys(rows[0] || {}).map(k => [k.toLowerCase(), k]));
+    const fieldKey = f => (f && keyMap.get(String(f).toLowerCase())) || f;
+    state.fieldKey = fieldKey;
+    const trace = DEBUG ? [] : null;
+    state.openTasks = computeOpenTasks(rows, state.cfg.openTasks, fieldKey, trace);
+    state.tasksOpen = new Set();                         // both lists start closed
+    state.returnedCount = rows.length;
+
+    const okRows = state.openTasks.okRows;
+
+    // percent = rows the main table shows collapsed, before filters, with the configured
+    // hierarchy (so debug mode gives the same number) / (those + both missing lists)
+    const ot = state.openTasks;
+    ot.mainRows = buildTree(okRows, buildLayout(state.cfg)).length;
+    const denom = ot.mainRows + ot.missingSR.length + ot.missingINSP.length;
+    ot.completePct = denom ? Math.round(ot.mainRows / denom * 100) : 100;
+
+    if (trace) {
+      const o = state.cfg.openTasks || {};
+      const head = [
+        `Content Page – open tasks trace`,
+        `Created     : ${new Date().toLocaleString("en-GB")}`,
+        `Main Part   : ${mainpart}`,
+        `Main Serial : ${mainserial || "(none)"}`,
+        `Rows returned by the procedure: ${rows.length}   (#N below = row number N in that result, #1 = first row)`,
+        ``,
+        `Config openTasks:`,
+        `  calcPart    = ${o.calcPart}`,
+        `  calcSR      = ${o.calcSR}`,
+        `  calcSerial  = ${o.calcSerial}`,
+        `  calcINSP    = ${o.calcINSP}`,
+        `  inspGroupBy = ${(o.inspGroupBy || [o.calcPart]).join(", ")}`
+      ];
+      const sum = [
+        "", "=".repeat(78), "3. SUMMARY", "=".repeat(78),
+        `missing serial     : ${ot.missingSR.length}`,
+        `missing inspection : ${ot.missingINSP.length}`,
+        `rows removed from the main table : ${rows.length - okRows.length}  (of them ${ot.hiddenCount || 0} ignored NULL-serial rows)`,
+        `rows left in the main table      : ${okRows.length}`,
+        `main table rows (collapsed)      : ${ot.mainRows}`,
+        `complete % = ${ot.mainRows} / (${ot.mainRows} + ${ot.missingSR.length} + ${ot.missingINSP.length}) = ${ot.completePct}%`
+      ];
+      state.trace = { text: [...head, ...trace, ...sum].join("\r\n"), mainpart };
+    }
+    document.getElementById("logBtn").hidden = !trace;
+    state.rowCount = okRows.length;
+    state.allRows = okRows;
     state.filters = {};
+
+    await progress.finish();                             // let the progress card complete first
     applyFilters();
+    renderTasks();
+    renderRing();
     document.getElementById("results").hidden = false;
 
     // keep the parameters in the URL so the result can be bookmarked / shared
@@ -725,8 +1207,9 @@ async function run(mainpart, mainserial) {
     if (mainserial) q.set("mainserial", mainserial);
     history.replaceState(null, "", "?" + q.toString() + (DEBUG ? "&dbg" : ""));
   } catch (e) {
+    progress.fail();
     msg.textContent = e.message;
-    document.getElementById("results").hidden = true;
+    ["results", "tasks", "ring"].forEach(id => document.getElementById(id).hidden = true);
   } finally {
     btn.disabled = false; btn.textContent = "Run";
   }
@@ -870,6 +1353,17 @@ function buildXlsx(headers, rows) {
     { name: "xl/styles.xml", data: styles }
   ]);
 }
+
+document.getElementById("logBtn").onclick = () => {
+  if (!state.trace) return;
+  const blob = new Blob(["\uFEFF" + state.trace.text], { type: "text/plain;charset=utf-8" });   // BOM: Hebrew in Notepad
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ContentPage trace - ${state.trace.mainpart} - ${stamp}.txt`.replace(/[\\/:*?"<>|]/g, "_");
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
 
 document.getElementById("xlsBtn").onclick = () => {
   const cols = state.layout.columns;

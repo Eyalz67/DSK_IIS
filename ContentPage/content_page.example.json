@@ -1,5 +1,6 @@
 {
   "title": "דף תוכן",
+  "direction": "ltr",
   "logo": "/IMG/company_logo.png",
 
   "connection": {
@@ -23,5 +24,30 @@
     { "field": "Heter1",         "alias": "התרים",     "fieldIndex": 6 },
     { "field": "Heter2",         "alias": "התרים" },
     { "field": "Heter3",         "alias": "התרים" }
-  ]
+  ],
+
+  "openTasks": {
+    "calcPart":    "Result_Part",
+    "calcSR":      "Result_Serial",
+    "calcSerial":  "clean_lot",
+    "calcINSP":    "Inspection_Nbr",
+    "inspGroupBy": ["Eqms_Item", "Eqms_Item_Desc"],
+
+    "missingSR": {
+      "label": "סריאלי לא ידוע, לא דווחה הרכבה",
+      "fields": [
+        { "field": "Result_Part", "alias": "פריט" },
+        { "field": "Eqms_Item_Desc" }
+      ]
+    },
+
+    "missingINSP": {
+      "label": "חסר דוח בחינה",
+      "fields": [
+        { "field": "Eqms_Item" },
+        { "field": "Eqms_Item_Desc" },
+        { "field": "clean_lot", "alias": "serial" }
+      ]
+    }
+  }
 }

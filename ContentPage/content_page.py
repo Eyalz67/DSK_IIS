@@ -70,6 +70,23 @@ def connect(conn_cfg: dict):
     return cn
 
 
+def needed_fields(cfg: dict) -> list:
+    """Every SQL field the page needs, without duplicates, in this order:
+    main table fields, openTasks role fields, openTasks detail fields."""
+    names = [f.get("field") for f in cfg.get("fields", [])]
+    ot = cfg.get("openTasks") or {}
+    names += [ot.get(k) for k in ("calcPart", "calcSR", "calcSerial", "calcINSP")]
+    names += list(ot.get("inspGroupBy") or [])
+    for section in ("missingSR", "missingINSP"):
+        names += [f.get("field") for f in (ot.get(section) or {}).get("fields", [])]
+    out, seen = [], set()
+    for n in names:
+        if n and n.lower() not in seen:
+            seen.add(n.lower())
+            out.append(n)
+    return out
+
+
 # ---------------------------------------------------------------- endpoints
 @router.get("/config")
 def get_config():
@@ -102,7 +119,7 @@ def run(req: RunRequest):
     if not PROC_NAME_RE.match(proc):
         return fail(f"Invalid procedure name in config: {proc!r}")
 
-    wanted = [f["field"] for f in cfg.get("fields", []) if f.get("field")]
+    wanted = needed_fields(cfg)
     mainpart = req.mainpart.strip()
     mainserial = (req.mainserial or "").strip() or None
 
