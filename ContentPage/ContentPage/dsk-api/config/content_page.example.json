@@ -1,0 +1,88 @@
+{
+  "title": "דף תוכן",
+  "direction": "ltr",
+  "logo": "/IMG/company_logo.png",
+
+  "tabs": [
+    { "label": "דף תוכן",  "page": "ContentPage.html" },
+    { "label": "איסוף NC", "page": "Collect.html", "section": "collect" }
+  ],
+
+  "connection": {
+    "dsn": "DSK_SQL",
+    "uid": "dsk_reader",
+    "pwd": "CHANGE_ME",
+    "procedure": "dbo.usp_GetAbPartTree",
+    "queryTimeout": 60,
+    "nifiCollectUrl": "http://nifi-server:9095/collect",
+    "nifiTimeout": 30,
+    "collectRoot": "D:\\Collect"
+  },
+
+  "combineDelimiter": " | ",
+
+  "fields": [
+    { "field": "Inspection_Nbr", "alias": "דוח בחינה", "fieldIndex": 1 },
+    { "field": "Process",                              "fieldIndex": 2 },
+    { "field": "part",           "alias": "פריט",      "fieldIndex": 3 },
+    { "field": "Eqms_Item_Desc",                       "fieldIndex": 4 },
+    { "field": "Clean_Lot",      "alias": "Serial",    "fieldIndex": 5, "group": "Serial", "groupIndex": 1 },
+    { "field": "Document",                                              "group": "Serial", "groupIndex": 2 },
+    { "field": "Rev",                                                   "group": "Serial", "groupIndex": 3 },
+    { "field": "Heter1",         "alias": "התרים",     "fieldIndex": 6 },
+    { "field": "Heter2",         "alias": "התרים" },
+    { "field": "Heter3",         "alias": "התרים" }
+  ],
+
+  "openTasks": {
+    "calcPart":    "Result_Part",
+    "calcSR":      "Result_Serial",
+    "calcSerial":  "clean_lot",
+    "calcINSP":    "Inspection_Nbr",
+    "inspGroupBy": ["Eqms_Item", "Eqms_Item_Desc"],
+
+    "missingSR": {
+      "label": "סריאלי לא ידוע, לא דווחה הרכבה",
+      "fields": [
+        { "field": "Result_Part", "alias": "פריט" },
+        { "field": "Eqms_Item_Desc" }
+      ]
+    },
+
+    "missingINSP": {
+      "label": "חסר דוח בחינה",
+      "fields": [
+        { "field": "Eqms_Item" },
+        { "field": "Eqms_Item_Desc" },
+        { "field": "clean_lot", "alias": "serial" }
+      ]
+    }
+  },
+
+  "collect": {
+    "fields": [
+      { "field": "Eqms_Item",      "alias": "מק״ט",   "fieldIndex": 1 },
+      { "field": "Eqms_Item_Desc", "alias": "תיאור",  "fieldIndex": 2 },
+      { "field": "clean_lot",      "alias": "סריאלי", "fieldIndex": 3 },
+      { "field": "Inspection_Nbr", "alias": "דוח בחינה", "fieldIndex": 4,
+        "send_fields": ["Eqms_Item", "clean_lot"], "send_command": "COLLECT_INSPECTION" },
+      { "field": "Heter1",         "alias": "היתרים",  "fieldIndex": 5,
+        "send_fields": ["Eqms_Item", "clean_lot"], "send_command": "COLLECT_HETER" }
+    ],
+    "line_button": {
+      "label":   "אסוף שורה",
+      "command": "COLLECT_ROW"
+    },
+
+    "mainButton": {
+      "color":   "#2e7d32",
+      "text":    "אסוף הכל",
+      "command": "COLLECT_ALL"
+    },
+    "book_button": {
+      "color":   "#a9805b",
+      "text":    "ספר",
+      "command": "BOOK"
+    }
+  }
+}
